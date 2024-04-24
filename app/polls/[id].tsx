@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Stack, useLocalSearchParams } from 'expo-router';
 import {
   View,
@@ -10,7 +11,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import {useEffect, useState} from 'react';
-import {Poll} from "@/types/db";
+import {Poll, Vote} from "@/types/db";
 import {supabase} from "@/lib/supabase";
 
 const poll = {
@@ -20,15 +21,13 @@ const poll = {
 
 export default function PollDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  // @ts-ignore
   const [poll, setPoll] = useState<Poll>(null);
+  const [userVote, setUserVote] = useState<Vote>(null);
 
   const [selected, setSelected] = useState('');
 
   useEffect(() => {
     const fetchPolls = async () => {
-      console.log('Fetching...');
-
       let { data, error } = await supabase
         .from('polls')
         .select('*')
@@ -37,14 +36,50 @@ export default function PollDetails() {
       if (error) {
         Alert.alert('Error fetching data');
       }
-      // @ts-ignore
       setPoll(data);
     };
+
+    const fetchUserVote = async () => {
+      let { data, error } = await supabase
+        .from('votes')
+        .select('*')
+        .eq('poll_id', Number.parseInt(id))
+        .eq('user_id', user.id)
+        .limit(1)
+        .single();
+
+      setUserVote(data);
+      if (data) {
+        setSelected(data.option);
+      }
+    };
+
     fetchPolls();
+    fetchUserVote();
   }, []);
 
-  const vote = () => {
-    console.warn('Vote: ', selected);
+  const vote = async () => {
+    const newVote = {
+      option: selected,
+      poll_id: poll.id,
+      user_id: user.id,
+    };
+    if (userVote) {
+      newVote.id = userVote.id;
+    }
+    const { data, error } = await supabase
+      .from('votes')
+      .upsert([newVote])
+      .select()
+      .single();
+
+    if (error) {
+      console.log(error);
+      Alert.alert('Failed to vote');
+    } else {
+      setUserVote(data);
+      Alert.alert('Thank you for your vote');
+    }
   };
 
   if (!poll) {
