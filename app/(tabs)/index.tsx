@@ -9,7 +9,7 @@ const POLLS = [{ id: 1 }, { id: 2 }, { id: 3 }];
 
 export default function TabOneScreen() {
   const router = useRouter();
-  const [polls, setPolls] = useState([]);
+  const [polls, setPolls] = useState<Poll[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -46,9 +46,7 @@ export default function TabOneScreen() {
         renderItem={({ item }) => (
           // @ts-ignore
           <TouchableOpacity activeOpacity={0.7} onPress={() => router.push(`/polls/${item.id}`)} style={styles.pollContainer}>
-            <Text style={styles.pollTitle}>
-              {item.id}: Example poll question
-            </Text>
+            <Text style={styles.pollTitle}>{item.question}</Text>
           </TouchableOpacity>
         )}
       />
