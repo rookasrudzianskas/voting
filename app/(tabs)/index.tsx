@@ -1,31 +1,74 @@
-import { StyleSheet } from 'react-native';
+// @ts-nocheck
+import {Link, Stack, useRouter} from 'expo-router';
+import {Alert, Button, FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {AntDesign} from "@expo/vector-icons";
+import {useEffect, useState} from "react";
+import {supabase} from "@/lib/supabase";
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+const POLLS = [{ id: 1 }, { id: 2 }, { id: 3 }];
 
 export default function TabOneScreen() {
+  const router = useRouter();
+  const [polls, setPolls] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      console.log('Fetching...');
+
+      let { data, error } = await supabase.from('polls').select('*');
+      if (error) {
+        Alert.alert('Error fetching data');
+      }
+     setPolls(data as any);
+    })();
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    <>
+      <Stack.Screen
+        options={{
+          title: 'Polls',
+          headerRight: () => (
+            <TouchableOpacity className={'mr-3'} activeOpacity={0.7} onPress={() => router.push('/polls/new')}>
+              <AntDesign name="plus" size={20} color="gray" />
+            </TouchableOpacity>
+          ),
+          headerLeft: () => (
+            <TouchableOpacity className={'ml-3'} activeOpacity={0.7} onPress={() => router.push('/profile')}>
+              <AntDesign name="user" size={20} color="gray" />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <FlatList
+        data={polls}
+        contentContainerStyle={styles.container}
+        renderItem={({ item }) => (
+          // @ts-ignore
+          <TouchableOpacity activeOpacity={0.7} onPress={() => router.push(`/polls/${item.id}`)} style={styles.pollContainer}>
+            <Text style={styles.pollTitle}>
+              {item.id}: Example poll question
+            </Text>
+          </TouchableOpacity>
+        )}
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 10,
+    gap: 5,
   },
-  title: {
-    fontSize: 20,
+  pollContainer: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 5,
+  },
+  pollTitle: {
     fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+    fontSize: 16,
   },
 });
