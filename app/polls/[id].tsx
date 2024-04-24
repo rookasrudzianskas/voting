@@ -10,14 +10,10 @@ import {
   Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import {Poll, Vote} from "@/types/db";
+import {useAuth} from "@/providers/AuthProvider";
 import {supabase} from "@/lib/supabase";
-
-const poll = {
-  question: 'React Native vs Flutter?',
-  options: ['React Native FTW', 'Flutter', 'SwiftUI'],
-};
 
 export default function PollDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -25,6 +21,8 @@ export default function PollDetails() {
   const [userVote, setUserVote] = useState<Vote>(null);
 
   const [selected, setSelected] = useState('');
+
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchPolls = async () => {
@@ -40,6 +38,9 @@ export default function PollDetails() {
     };
 
     const fetchUserVote = async () => {
+      if (!user) {
+        return;
+      }
       let { data, error } = await supabase
         .from('votes')
         .select('*')
@@ -62,7 +63,7 @@ export default function PollDetails() {
     const newVote = {
       option: selected,
       poll_id: poll.id,
-      user_id: user.id,
+      user_id: user?.id,
     };
     if (userVote) {
       newVote.id = userVote.id;
